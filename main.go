@@ -14,7 +14,7 @@ import (
 )
 
 type EventHandlerOutput interface {
-	SendEvent(event handler.RawEvent) error
+	SendEvent(event Event) error
 	Run() error
 }
 
@@ -33,27 +33,8 @@ type SnsConfig struct {
 	Router          *gin.Engine
 }
 
-func main() {
-
-	/*sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))*/
-
-	testApp := Create("test-app").
-		CreateSnsEndpointWithVerifiy(3000, true).
-		AddEvent("ServerCreated", "test-create", func(eventData map[string]interface{}, source string) error {
-			fmt.Printf("testing\n")
-			return nil
-		}).
-		Build()
-
-	err := testApp.SendEvent(handler.RawEvent{
-		Timestamp: time.Now(),
-		Message:   `{"event": "ServerCreated", "data": {"server_id": "glade-dev"}}`,
-	})
-	if err != nil {
-		panic(err)
-	}
+type Event struct {
+	Message string
 }
 
 func Create(appName string) *EventHandler {
@@ -106,8 +87,11 @@ func (e *EventHandler) Build() EventHandlerOutput {
 	return e
 }
 
-func (e *EventHandler) SendEvent(event handler.RawEvent) error {
-	return e.handler.RouteEvent(event, "local")
+func (e *EventHandler) SendEvent(event Event) error {
+	return e.handler.RouteEvent(handler.RawEvent{
+		Message:   event.Message,
+		Timestamp: time.Now(),
+	}, "local")
 }
 
 func (e *EventHandler) Run() error {

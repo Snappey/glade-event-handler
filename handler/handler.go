@@ -75,8 +75,13 @@ func (h *Handler) RouteEvent(event RawEvent, source string) error {
 		return errors.New("event field not defined")
 	}
 
+	callbacks := h.Callbacks[fmt.Sprintf("%s", eventKey)]
+	if len(callbacks) == 0 {
+		fmt.Printf("warning: no callbacks registered for %s\n", eventKey)
+	}
+
 	// Route event to the callback function in the user defined callbacks
-	for _, c := range h.Callbacks[fmt.Sprintf("%s", eventKey)] {
+	for _, c := range callbacks {
 		err := c.Func(jsonMessage, source)
 		if err != nil {
 			fmt.Printf("error executing callback '%s': %s\n", c.Id, err.Error())
